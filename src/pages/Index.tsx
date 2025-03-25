@@ -9,7 +9,7 @@ import MultiLanguageSelector from '@/components/MultiLanguageSelector';
 import AdvancedSettings from '@/components/AdvancedSettings';
 import VideoProcessingStatus from '@/components/VideoProcessingStatus';
 import ResultsDisplay from '@/components/ResultsDisplay';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { 
   Language, 
   UploadedFile, 
@@ -108,10 +108,10 @@ const Index = () => {
       console.error('Error processing videos:', error);
       toast.error('An error occurred during processing.');
       
-      // Mark files as error
+      // Mark files as error - ensuring we don't break the type
       const errorFiles = uploadedFiles.map(file => {
         if (file.status !== 'completed') {
-          return { ...file, status: 'error', error: 'Processing failed' };
+          return { ...file, status: 'error' as const, error: 'Processing failed' };
         }
         return file;
       });
