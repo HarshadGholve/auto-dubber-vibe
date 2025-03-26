@@ -31,6 +31,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
       return;
     }
     
+    // For blob URLs, we can open in a new tab
     window.open(result.videoUrl, '_blank');
   };
 

@@ -52,18 +52,21 @@ export async function translateVideos(
       throw new Error(errorMessage);
     }
     
-    // Handle video downloads
-    // The response might be a blob of multiple files
-    // We'll return URLs the user can download
+    // Handle video downloads from FastAPI FileResponse
+    // We expect an array of video files
     const contentType = response.headers.get("content-type");
-    const contentDisposition = response.headers.get("content-disposition");
     
-    if (contentType && contentType.includes("video")) {
+    if (contentType && contentType.includes("multipart/form-data")) {
+      // Multiple files as form data
+      // This would need specific handling on the client side
+      throw new Error("Multipart responses are not supported in the browser. Consider modifying the API to return URLs or a single zip file.");
+    } else if (contentType && contentType.includes("video")) {
       // Single video file response
       const blob = await response.blob();
       const videoUrl = URL.createObjectURL(blob);
       
       // Try to get filename from content-disposition
+      const contentDisposition = response.headers.get("content-disposition");
       let filename = "translated_video.mp4";
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
@@ -77,19 +80,30 @@ export async function translateVideos(
         processingTime: "Processing completed successfully"
       };
     } else {
-      // API might return JSON with file URLs or other information
+      // Handle application/json or other content types
       try {
+        // Try to parse as JSON first
         const data = await response.json();
-        return {
-          videoUrls: Array.isArray(data) ? data : [data],
-          processingTime: "Processing completed successfully"
-        };
+        if (Array.isArray(data)) {
+          // Array of video URLs
+          return {
+            videoUrls: data,
+            processingTime: "Processing completed successfully"
+          };
+        } else {
+          // Single video URL or other data
+          return {
+            videoUrls: [data],
+            processingTime: "Processing completed successfully"
+          };
+        }
       } catch (e) {
-        // If it's not JSON, it might be a multi-file response 
-        // which browser might not handle well
+        // If not JSON, try to handle as blob and create URL
+        const blob = await response.blob();
+        const videoUrl = URL.createObjectURL(blob);
         return {
-          videoUrls: ["#"], // Placeholder
-          processingTime: "Videos processed but need server-side handling for downloads"
+          videoUrls: [videoUrl],
+          processingTime: "Processing completed successfully"
         };
       }
     }

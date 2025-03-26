@@ -94,16 +94,16 @@ const Index = () => {
         prev.map(file => ({ ...file, status: 'completed' as const, progress: 100 }))
       );
 
-      // Generate results for each target language
+      // Create result entries for each target language
       const newResults: ProcessingResult[] = [];
       
-      // Create result entries for each target language
-      for (const file of uploadedFiles) {
-        for (let i = 0; i < targetLanguages.length; i++) {
-          const targetLang = targetLanguages[i];
-          // Use the video URL from the response if available, otherwise use placeholder
-          const videoUrl = response.videoUrls[i] || '#';
-          
+      for (let i = 0; i < targetLanguages.length; i++) {
+        const targetLang = targetLanguages[i];
+        // Use the video URL from the response if available, otherwise use placeholder
+        const videoUrl = response.videoUrls[i] || '#';
+        
+        // For each file, create a result with the target language
+        uploadedFiles.forEach(file => {
           newResults.push({
             id: uuidv4(),
             originalFileId: file.id,
@@ -111,7 +111,7 @@ const Index = () => {
             videoUrl: videoUrl,
             thumbnail: file.thumbnail
           });
-        }
+        });
       }
 
       setResults(newResults);
@@ -121,15 +121,19 @@ const Index = () => {
       console.error('Error processing videos:', error);
       toast.error(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // Mark files as error - ensuring we don't break the type
-      const errorFiles = uploadedFiles.map(file => {
-        if (file.status !== 'completed') {
-          return { ...file, status: 'error' as const, error: 'Processing failed' };
-        }
-        return file;
-      });
-      
-      setUploadedFiles(errorFiles);
+      // Mark files as error
+      setUploadedFiles(prev => 
+        prev.map(file => {
+          if (file.status !== 'completed') {
+            return { 
+              ...file, 
+              status: 'error' as const, 
+              error: 'Processing failed' 
+            };
+          }
+          return file;
+        })
+      );
     } finally {
       setIsProcessing(false);
     }
