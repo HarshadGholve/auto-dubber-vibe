@@ -97,15 +97,18 @@ const Index = () => {
       // Generate results for each target language
       const newResults: ProcessingResult[] = [];
       
-      // In a real implementation, the API would return actual video URLs
-      // Here we're just creating placeholders based on the provided files and languages
+      // Create result entries for each target language
       for (const file of uploadedFiles) {
-        for (const targetLang of targetLanguages) {
+        for (let i = 0; i < targetLanguages.length; i++) {
+          const targetLang = targetLanguages[i];
+          // Use the video URL from the response if available, otherwise use placeholder
+          const videoUrl = response.videoUrls[i] || '#';
+          
           newResults.push({
             id: uuidv4(),
             originalFileId: file.id,
             language: targetLang,
-            videoUrl: '#', // In production, this would be a real URL from the API
+            videoUrl: videoUrl,
             thumbnail: file.thumbnail
           });
         }
@@ -116,7 +119,7 @@ const Index = () => {
       
     } catch (error) {
       console.error('Error processing videos:', error);
-      toast.error('An error occurred during processing.');
+      toast.error(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
       // Mark files as error - ensuring we don't break the type
       const errorFiles = uploadedFiles.map(file => {

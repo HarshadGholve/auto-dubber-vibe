@@ -11,14 +11,26 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
   if (results.length === 0) return null;
 
   const handleDownload = (result: ProcessingResult) => {
-    // In a real implementation, you would use the actual URL from the API
-    // For now, just show a notification that this would download the file
-    if (result.videoUrl === '#') {
-      alert('In a production environment, this would download the translated video file.');
+    if (!result.videoUrl || result.videoUrl === '#') {
+      alert('Video is still processing or unavailable for download.');
       return;
     }
     
-    // If we have a real URL, use it
+    // Create an anchor element and trigger download
+    const a = document.createElement('a');
+    a.href = result.videoUrl;
+    a.download = `translated_${result.language.code}.mp4`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handlePlay = (result: ProcessingResult) => {
+    if (!result.videoUrl || result.videoUrl === '#') {
+      alert('Video is not available for playback.');
+      return;
+    }
+    
     window.open(result.videoUrl, '_blank');
   };
 
@@ -39,7 +51,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
                 <button 
                   className="p-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-colors"
                   aria-label="Play video"
-                  onClick={() => handleDownload(result)}
+                  onClick={() => handlePlay(result)}
                 >
                   <Play className="h-6 w-6 text-primary" />
                 </button>
