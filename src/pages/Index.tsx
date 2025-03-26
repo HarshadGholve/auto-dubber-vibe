@@ -18,6 +18,7 @@ import {
   DEFAULT_SETTINGS,
   LANGUAGES
 } from '@/lib/types';
+import { translateVideos } from '@/lib/api';
 
 const Index = () => {
   // State for source language
@@ -48,7 +49,7 @@ const Index = () => {
     setUploadedFiles(prev => prev.filter(file => file.id !== id));
   };
 
-  // Process videos
+  // Process videos using the API
   const processVideos = async () => {
     if (uploadedFiles.length === 0) {
       toast.error('Please upload at least one video file.');
@@ -64,46 +65,55 @@ const Index = () => {
     toast.info('Starting to process videos...');
 
     try {
-      // Simulate processing with progress updates
-      // In a real implementation, this would make API calls to your backend
-      const updatedFiles = [...uploadedFiles];
+      // Mark files as uploading
+      const updatedFiles = uploadedFiles.map(file => ({
+        ...file,
+        status: 'uploading' as const,
+        progress: 0
+      }));
+      setUploadedFiles(updatedFiles);
+
+      // Simulate upload progress (in a real app, you might get progress from the API)
+      const progressInterval = setInterval(() => {
+        setUploadedFiles(prev => 
+          prev.map(file => 
+            file.status === 'uploading' 
+              ? { ...file, progress: Math.min(file.progress + 5, 95) }
+              : file
+          )
+        );
+      }, 300);
+
+      // Call the API to translate videos
+      const response = await translateVideos(uploadedFiles, sourceLanguage, targetLanguages);
+      
+      clearInterval(progressInterval);
+
+      // Update files to completed
+      setUploadedFiles(prev => 
+        prev.map(file => ({ ...file, status: 'completed' as const, progress: 100 }))
+      );
+
+      // Generate results for each target language
       const newResults: ProcessingResult[] = [];
-
-      for (let i = 0; i < updatedFiles.length; i++) {
-        const file = updatedFiles[i];
-        file.status = 'uploading';
-        setUploadedFiles([...updatedFiles]);
-
-        // Simulate upload progress
-        for (let progress = 0; progress <= 100; progress += 10) {
-          file.progress = progress;
-          setUploadedFiles([...updatedFiles]);
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        file.status = 'processing';
-        setUploadedFiles([...updatedFiles]);
-        
-        // Simulate processing for each target language
+      
+      // In a real implementation, the API would return actual video URLs
+      // Here we're just creating placeholders based on the provided files and languages
+      for (const file of uploadedFiles) {
         for (const targetLang of targetLanguages) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Create a result for this file and language
           newResults.push({
             id: uuidv4(),
             originalFileId: file.id,
             language: targetLang,
-            videoUrl: '#', // In a real app, this would be a URL to the processed video
+            videoUrl: '#', // In production, this would be a real URL from the API
             thumbnail: file.thumbnail
           });
         }
-
-        file.status = 'completed';
-        setUploadedFiles([...updatedFiles]);
       }
 
       setResults(newResults);
       toast.success('All videos processed successfully!');
+      
     } catch (error) {
       console.error('Error processing videos:', error);
       toast.error('An error occurred during processing.');

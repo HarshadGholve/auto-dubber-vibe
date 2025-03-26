@@ -10,6 +10,18 @@ interface ResultsDisplayProps {
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
   if (results.length === 0) return null;
 
+  const handleDownload = (result: ProcessingResult) => {
+    // In a real implementation, you would use the actual URL from the API
+    // For now, just show a notification that this would download the file
+    if (result.videoUrl === '#') {
+      alert('In a production environment, this would download the translated video file.');
+      return;
+    }
+    
+    // If we have a real URL, use it
+    window.open(result.videoUrl, '_blank');
+  };
+
   return (
     <div className="w-full mt-12 animate-fade-in">
       <h3 className="text-xl font-semibold mb-6">Translated Videos</h3>
@@ -27,6 +39,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
                 <button 
                   className="p-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-colors"
                   aria-label="Play video"
+                  onClick={() => handleDownload(result)}
                 >
                   <Play className="h-6 w-6 text-primary" />
                 </button>
@@ -44,14 +57,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
                 <span className="text-sm">{result.language.name}</span>
               </div>
               
-              <a 
-                href={result.videoUrl} 
-                download
+              <button 
+                onClick={() => handleDownload(result)}
                 className="button-secondary py-1.5 px-3 text-xs flex items-center gap-1.5"
               >
                 <Download className="h-3 w-3" />
                 Download
-              </a>
+              </button>
             </div>
           </div>
         ))}
